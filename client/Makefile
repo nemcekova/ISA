@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic
 run:
-	$(CC) $(CFLAGS)  isaserver.c -o isaserver
+	$(CC) $(CFLAGS)  isaclient.c -o isaclient
 
 clean:
-	rm -f isaserver
+	rm -f isaclient
