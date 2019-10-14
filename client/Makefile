@@ -1,7 +1,7 @@
-CC = gcc
+CC = g++
 CFLAGS = -Wall -Wextra -pedantic
 run:
-	$(CC) $(CFLAGS)  isaclient.c -o isaclient
+	$(CC) $(CFLAGS)  isaclient.cpp -o isaclient
 
 clean:
 	rm -f isaclient
