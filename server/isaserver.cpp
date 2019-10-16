@@ -44,25 +44,29 @@ class Board{
             }
         }
         
+        void UpdateContent(int id, std::string new_value){
+            std::map<int,std::string>::iterator it = content.begin();
+            for (it=content.begin(); it!=content.end(); ++it){
+                if(it->first == id){
+                    it->second = new_value;
+                }
+            }
+        }
+        
         void DeleteContent(int id){
-            bool changing = false;
             std::string key;
             std::map<int,std::string>::iterator it = content.begin();
             for (it=content.begin(); it!=content.end(); ++it){
-                /*if(changing == true){
-                    it->first = key; ///////////NEFUNGUJE TOTO JE READ ONLY
-                    key++;
-                }*/
+                
                 if(it->first == id){
                 std::map<int, std::string>::iterator dupe = it;
-                //std::map<int, std::string>::iterator dupe2 = dupe2;
                 for(dupe = it; dupe != content.end();++dupe){
-                    //for(dupe2 = dupe; dupe2!=content.end();++dupe2){
-                        key = dupe->second;
-                        it->second = key;
-                    //}
-                    //content.erase(it);
-                    }
+                    key = dupe->second;
+                    it->second = key;
+                    it = dupe;
+                }
+                content.erase(it);
+                break;
                 }
             }
         }
@@ -205,8 +209,8 @@ int main(int argc, char *argv[]){
     for (it=obsah.begin(); it!=obsah.end(); ++it)
     std::cout << it->first << " " << it->second << '\n';
     //nova.AddNewBoard("prva");
-    
-    nova.DeleteContent(2);
+    printf("------------------------------------\n");
+    nova.DeleteContent(7);
     
     std::map<int, std::string> obsa = nova.GetContent();
      it = obsa.begin();
