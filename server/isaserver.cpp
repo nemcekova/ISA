@@ -78,9 +78,7 @@ class Board{
     private:
         std::map<int, std::string> content; //mapovanie obsahu na nastenku
         int i;
-        //void AddNewBoard(std::string name){
-            
-        //}
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -210,7 +208,7 @@ int main(int argc, char *argv[]){
     std::cout << it->first << " " << it->second << '\n';
     //nova.AddNewBoard("prva");
     printf("------------------------------------\n");
-    nova.DeleteContent(7);
+    nova.DeleteContent(8);
     
     std::map<int, std::string> obsa = nova.GetContent();
      it = obsa.begin();
