@@ -101,5 +101,11 @@ int main(int argc, char *argv[]){
     
     printf("Client succesfully connected\n");
     
+    strcpy(buffer, "GET /board/name HTTP/1.1\nContent-Type: text/plain\nContent-Length: 5\n\ntest\n");
+    int j = write(sock, buffer, 74);
+    if(j == -1){
+        err(1, "write failed");
+    }
+    
     return 0;
 }

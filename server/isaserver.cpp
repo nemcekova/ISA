@@ -12,6 +12,8 @@
 #define QUEUE 1
 
 
+//////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// CLASS BOARD ////////////////////////////////////////
 
 class Board{
     std::string name;
@@ -32,6 +34,9 @@ class Board{
             return(name);
         }
         
+        /*
+        *metoda prida novy prispevok do nastenky na koniec
+        */
         void AddContent(std::string text){
             if(content.empty() == true){
                 i = 1;
@@ -82,6 +87,8 @@ class Board{
 };
 
 /////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// CLASS LIST FOR LIST OF BOARDS /////////////////////////
+
 class List{
     std::string name;
     std::vector<std::string> nastenky; // zoznam aktualnych nasteniek
@@ -159,6 +166,8 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////// ARGUMENTS PARSING //////////////////////////////////////////
+
 int main(int argc, char *argv[]){
     char *portnum;
     if(argc > 3){
@@ -239,6 +248,7 @@ int main(int argc, char *argv[]){
     
     
 /////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// SERVER CONNECTION ////////////////////////////////
     
     
     int fd;
@@ -278,16 +288,70 @@ int main(int argc, char *argv[]){
     printf("Listening...\n");
     
     leng = sizeof(client);
+    
+    //waiting for client
     while(1){
+        //connecting client
         if((sock = accept(fd, (struct sockaddr *)&client, (socklen_t *)&leng)) == -1){
             err(1, "accept failed");
         }
         printf("connection accepted\n");
-    
+        
+        //receiving data(reguest) from client
         if((size = read(sock, buffer, BUFFER)) > 0){
             std::cout << buffer << "\n";
-            printf("A new connection accepted\n");
+            printf("Received data\n");
         }
+        
+        
+        
+        /*char* pch = strtok(buffer, "\n");
+        std::cout << "Oddelene : \n" << pch << "\n";
+        char * och = strtok(pch, " ");
+        while(och != NULL){
+            std::cout << "while " << och << "\n";
+            if(strcmp(och, "GET") == 0){
+               method = "GET";
+               std::smatch m;
+               std::regex g("^GET\\s(\\/.*)\\sHTTP\\/1.1$");
+               std::regex_search(pch, m, g);
+              // std::cout << "GET GET GET \n";
+              
+           }
+           else if(strcmp(och, "POST") == 0){
+               method = "POST";
+               
+           }
+           else if(strcmp(och, "PUT") == 0){
+               method = "PUT";
+           }
+           else if(strcmp(och, "DELETE") == 0){
+               method = "DELETE";
+           }
+           else if(strcmp(och, "HTTP/1.1")){
+               std::cout << "http" << och << "\n";
+               break;
+           }
+           else if(strcmp(och, "board/name")){
+               std::cout << "aaaaaaaaaaaaaaaaaa\n";
+           }
+           else{
+               std::cout << "ehhehehehe : " << och;
+           }
+           
+           //och = strtok(NULL, " ");
+           
+       }
+
+           /*else if(strcmp(och, "board") == 0){
+               where = "board";
+           }
+           else if(strcmp(och, "boards") == 0){
+               where = "boards";
+           }*/
+        
+        
+        //sending data(respons) to client
         //strcpy(buffer, "200 Ok, server is Listening");
         strcpy(buffer, "HTTP/1.1 200 Ok\nContent-Type: text/plain\nContent-Length: 5\n\ntest\n");
         std::cout << "Ide tam: \n" << buffer << "\n";
@@ -298,7 +362,10 @@ int main(int argc, char *argv[]){
         }
     }
     
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////// FOR PARSED MESSAGE ////////////////////////////////////////////////
     
+    //POST /boards/name
     if(method == "POST" && where == "boards"){
         //ak existuje nastenka s danym nazvom, vracia 409
         bool exist = zoznam->BoardExists(name);
@@ -314,6 +381,7 @@ int main(int argc, char *argv[]){
         }
     }
     
+    //GET /boards 
     else if(method == "GET" && where == "boards"){
         std::vector<std::string> nastenky = zoznam->GetNastenky();
         //ak ziadna nastenka neexistuje, kod uspechu je 404
@@ -326,7 +394,9 @@ int main(int argc, char *argv[]){
         } 
     }
     
+    //DELETE /boards/name
     else if(method == "DELETE" && where == "boards"){
+        //ak nastenka s danym menom neexistuje, vracia 404
         bool exist = zoznam->BoardExists(name);
         if(exist==false){
             ret = 404;
@@ -336,14 +406,18 @@ int main(int argc, char *argv[]){
             Board* del = zoznam->GetOdkaz(name);
             zoznam->DeleteBoard(name);
             delete del;
+            ret = 200;
         }
     }
     
+    //GET /board/name
     else if(method == "GET" && where == "board"){
         bool exist = zoznam->BoardExists(name);
+        //ak nastenka s danym menom neexistuje, vracia 404
         if(exist==false){
             ret = 404;
         }
+        //vrati obsah nastenky id
         else{
             Board* show = zoznam->GetOdkaz(name);
             show->GetContent();
@@ -351,14 +425,18 @@ int main(int argc, char *argv[]){
         }
     }
     
+    //POST /board/name
     else if(method == "POST" && where == "board"){
+        //ak text ktory chceme vlozit je prazdny, vracia 400
         if(text.size() == 0){
             ret = 400;
         }
         bool exist = zoznam->BoardExists(name);
+        //ak nastenka s danym menom neexistuje, vracia 404
         if(exist==false){
             ret = 404;
         }
+        //prida novy prispevok na koniec nastenky
         else{
             Board* board = zoznam->GetOdkaz(name);
             board->AddContent(text);
@@ -366,14 +444,18 @@ int main(int argc, char *argv[]){
         }
     }
     
+    //PUT /board/name/id 
     else if(method == "PUT" && where == "board"){
+        //ak text ktory chceme vlozit je prazdny, vracia 400
         if(text.size() == 0){
             ret = 400;
         }
+        //ak nastenka s danym menom neexistuje, vracia 404
         bool exist = zoznam->BoardExists(name);
         if(exist==false){
             ret = 404;
         }
+        //zmeni obsah nastenky na prispevku id na hodnotu text
         else{
             Board* board = zoznam->GetOdkaz(name);
             board->UpdateContent(id, text);
@@ -381,11 +463,14 @@ int main(int argc, char *argv[]){
         }
     }
     
+    //DELETE /board/name/id -
     else if(method == "DELETE" && where == "board"){
         bool exist = zoznam->BoardExists(name);
+        //ak nastenka s danym menom neexistuje, vracia 404
         if(exist==false){
             ret = 404;
         }
+        //odstrani prispevok id na nastenke name
         else{
             Board* board = zoznam->GetOdkaz(name);
             board->DeleteContent(id);
