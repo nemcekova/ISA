@@ -259,13 +259,13 @@ int main(int argc, char *argv[]){
     std::string method;
     std::string where;
     std::string name;
+    int id;
+    std::string text;
     struct sockaddr_in server;
     struct sockaddr_in client;
     char buffer[BUFFER];
     List* zoznam = new List("novy");
     int ret;
-    std::string text;
-    int id;
     
     if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
         fprintf(stderr, "could not create socket\n" );
@@ -304,21 +304,98 @@ int main(int argc, char *argv[]){
         }
         
         
-        
+/////////////////////////////////////////////////////////////////////////////////
+///////////////////// HEADER PARSING ////////////////////////////////////////////
         char* pch = strtok(buffer, "\n");
         std::cout << "Oddelene : \n" << pch << "\n";
         
         
+        //zoberie obsah spravy
+        std::string buf(buffer);
+        std::smatch neviem;
+        std::regex regneviem("^(.+)//\n//\n(.*)$");
+        if(std::regex_search(buf, neviem, regneviem)){
+            std::string nwm = neviem[2];
+            std::cout << nwm << "\n";
+            text = nwm;
+        }
+        
+        //parsuje hlavicku
         std::string s(pch);
         std::smatch m;
-        std::regex put("^PUT\\s(\\/.*)\\sHTTP\\/1.1$");
-        std::regex get("^GET\\s(\\/.*)\\sHTTP\\/1.1$");
-        if (std::regex_search(s, m, put) == true){
-            std::cout << "regex true\n";
+        std::regex get("^GET\\s(\\/.+)\\sHTTP\\/1.1$");
+        std::regex put("^PUT\\s\\/board\\/(.+)\\/([0-9]+)\\sHTTP\\/1.1$");
+        std::regex post("^POST\\s(\\/.*)\\sHTTP\\/1.1$");
+        std::regex delet("^DELETE\\s(\\/.*)\\sHTTP\\/1.1$");
+        
+        if (std::regex_search(s, m, get) == true){
+            method = "GET";
+            
+            std::string s1 = m[1];
+            std::smatch m1;
+            std::regex board("^\\/board\\/(.+)$");
+            std::regex boards("^\\/boards$");
+            
+            if(std::regex_search(s1, m1, board) == true){
+                where = "board";
+                name = m1[1];
+            }
+            else if(std::regex_search(s1, m1, boards)){
+                where = "boards";
+            }
         }
-        //else std::cout << "regex je true\n";
-        else if (std::regex_search(s, m, get) == true){
-            std::cout << "regex true\n";
+        
+        else if (std::regex_search(s, m, put) == true){
+            method = "PUT";
+            where = "board";
+            name = m[1];
+            std::string sid = m[2];
+            std::stringstream stream(sid);
+            id = 0;
+            stream >> id;
+            std::cout << where << ", " << name << ", " << id << "\n";
+            
+        }
+        
+        else if(std::regex_search(s, m, post) == true){
+            method = "POST";
+            
+            std::string s1 = m[1];
+            std::smatch m1;
+            std::regex board("^\\/board\\/(.+)$");
+            std::regex boards("^\\/boards\\/(.+)$");
+            
+            if(std::regex_search(s1, m1, board)){
+                where = "board";
+                name = m1[1];
+            }
+            else if(std::regex_search(s1, m1, boards)){
+                where = "boards";
+                name = m1[1];
+            }
+        }
+        
+        else if(std::regex_search(s, m, delet) == true){
+            method = "DELETE";
+            
+            std::string s1 = m[1];
+            std::smatch m1;
+            std::regex board("^\\/board\\/(.+)$");
+            std::regex boards("^\\/boards\\/(.+)\\/([0-9]+)$");
+            
+            if(std::regex_search(s1, m1, board)){
+                where = "board";
+                name = m1[1];
+            }
+            else if(std::regex_search(s1,m1, boards)){
+                where = "boards";
+                name = m1[1];
+                std::string sid = m[2];
+                std::stringstream stream(sid);
+                id = 0;
+                stream >> id;
+                
+            }
         }
         else std::cout << "ziadny regex sa nematchol\n";
         
