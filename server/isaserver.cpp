@@ -305,50 +305,25 @@ int main(int argc, char *argv[]){
         
         
         
-        /*char* pch = strtok(buffer, "\n");
+        char* pch = strtok(buffer, "\n");
         std::cout << "Oddelene : \n" << pch << "\n";
-        char * och = strtok(pch, " ");
-        while(och != NULL){
-            std::cout << "while " << och << "\n";
-            if(strcmp(och, "GET") == 0){
-               method = "GET";
-               std::smatch m;
-               std::regex g("^GET\\s(\\/.*)\\sHTTP\\/1.1$");
-               std::regex_search(pch, m, g);
-              // std::cout << "GET GET GET \n";
-              
-           }
-           else if(strcmp(och, "POST") == 0){
-               method = "POST";
-               
-           }
-           else if(strcmp(och, "PUT") == 0){
-               method = "PUT";
-           }
-           else if(strcmp(och, "DELETE") == 0){
-               method = "DELETE";
-           }
-           else if(strcmp(och, "HTTP/1.1")){
-               std::cout << "http" << och << "\n";
-               break;
-           }
-           else if(strcmp(och, "board/name")){
-               std::cout << "aaaaaaaaaaaaaaaaaa\n";
-           }
-           else{
-               std::cout << "ehhehehehe : " << och;
-           }
-           
-           //och = strtok(NULL, " ");
-           
-       }
-
-           /*else if(strcmp(och, "board") == 0){
-               where = "board";
-           }
-           else if(strcmp(och, "boards") == 0){
-               where = "boards";
-           }*/
+        
+        
+        std::string s(pch);
+        std::smatch m;
+        std::regex put("^PUT\\s(\\/.*)\\sHTTP\\/1.1$");
+        std::regex get("^GET\\s(\\/.*)\\sHTTP\\/1.1$");
+        if (std::regex_search(s, m, put) == true){
+            std::cout << "regex true\n";
+        }
+        //else std::cout << "regex je true\n";
+        else if (std::regex_search(s, m, get) == true){
+            std::cout << "regex true\n";
+        }
+        else std::cout << "ziadny regex sa nematchol\n";
+        
+        
+        
         
         
         //sending data(respons) to client
