@@ -22,8 +22,7 @@ class Board{
         Board(std::string boardname){
             std::cout << "Hello World!\n";
             name = boardname;
-            //AddNewBoard(name);
-            //nastenky.push_back(name);
+            
         }
         ~Board(){
             std::cout << "Bye World!\n";
@@ -108,12 +107,12 @@ public:
     bool BoardExists(std::string BoardName){
         for (unsigned int i = 0; i < nastenky.size(); i++){
             if(BoardName.compare(nastenky[i]) == 0){
-                std::cout << "true\n";
+        //        std::cout << "true\n";
                 return true;
             }
             else continue;
         }
-        std::cout << "false\n";
+        //std::cout << "false\n";
         return false;
     }
 
@@ -121,13 +120,11 @@ public:
     * add new board to the list 
     */
     void AddNewBoard(std::string nazov, Board* nastenka){
-        /*if(std::regex_match(nazov, std::regex("[a-zA-Z0-9]"))){
-            std::cout << "regex ok\n";
+        if(std::regex_match(nazov, std::regex("[a-zA-Z0-9]+")) == false){
+            //std::cout << "regex not ok\n";
+            //exit(1);
         }
-        else{
-            std::cout << "regex not ok\n";
-            exit(1);
-        }*/
+        
         bool exists = BoardExists(nazov);
         if(exists == false){
             nastenky.push_back(nazov);
@@ -162,6 +159,7 @@ public:
             it = odkazy.find(key);
             return(it->second);
         }
+        else return(NULL);
     }
 };
 
@@ -260,12 +258,13 @@ int main(int argc, char *argv[]){
     std::string where;
     std::string name;
     int id;
+    std::string ret;
     std::string text;
+    std::string message;
     struct sockaddr_in server;
     struct sockaddr_in client;
     char buffer[BUFFER];
     List* zoznam = new List("novy");
-    int ret;
     
     if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
         fprintf(stderr, "could not create socket\n" );
@@ -299,15 +298,16 @@ int main(int argc, char *argv[]){
         
         //receiving data(reguest) from client
         if((size = read(sock, buffer, BUFFER)) > 0){
-            std::cout << buffer << "\n";
+            //std::cout << buffer << "\n";
             printf("Received data\n");
+            std::cout << buffer << "\n";
         }
         
         
 /////////////////////////////////////////////////////////////////////////////////
 ///////////////////// HEADER PARSING ////////////////////////////////////////////
         char* pch = strtok(buffer, "\n");
-        std::cout << "Oddelene : \n" << pch << "\n";
+        //std::cout << "Oddelene : \n" << pch << "\n";
         
         
         //zoberie obsah spravy
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]){
         std::regex regneviem("^(.+)//\n//\n(.*)$");
         if(std::regex_search(buf, neviem, regneviem)){
             std::string nwm = neviem[2];
-            std::cout << nwm << "\n";
+            //std::cout << nwm << "\n";
             text = nwm;
         }
         
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]){
         std::string s(pch);
         std::smatch m;
         std::regex get("^GET\\s(\\/.+)\\sHTTP\\/1.1$");
-        std::regex put("^PUT\\s\\/board\\/(.+)\\/([0-9]+)\\sHTTP\\/1.1$");
+        std::regex put("^PUT\\s\\/board\\/([a-zA-Z0-9]+)\\/([0-9]+)\\sHTTP\\/1.1$");
         std::regex post("^POST\\s(\\/.*)\\sHTTP\\/1.1$");
         std::regex delet("^DELETE\\s(\\/.*)\\sHTTP\\/1.1$");
         
@@ -333,7 +333,7 @@ int main(int argc, char *argv[]){
             
             std::string s1 = m[1];
             std::smatch m1;
-            std::regex board("^\\/board\\/(.+)$");
+            std::regex board("^\\/board\\/([a-zA-Z0-9]+)$");
             std::regex boards("^\\/boards$");
             
             if(std::regex_search(s1, m1, board) == true){
@@ -343,6 +343,7 @@ int main(int argc, char *argv[]){
             else if(std::regex_search(s1, m1, boards)){
                 where = "boards";
             }
+            else ret = "404";
         }
         
         else if (std::regex_search(s, m, put) == true){
@@ -353,7 +354,7 @@ int main(int argc, char *argv[]){
             std::stringstream stream(sid);
             id = 0;
             stream >> id;
-            std::cout << where << ", " << name << ", " << id << "\n";
+            //std::cout << where << ", " << name << ", " << id << "\n";
             
         }
         
@@ -362,8 +363,8 @@ int main(int argc, char *argv[]){
             
             std::string s1 = m[1];
             std::smatch m1;
-            std::regex board("^\\/board\\/(.+)$");
-            std::regex boards("^\\/boards\\/(.+)$");
+            std::regex board("^\\/board\\/([a-zA-Z0-9]+)$");
+            std::regex boards("^\\/boards\\/([a-zA-Z0-9]+)$");
             
             if(std::regex_search(s1, m1, board)){
                 where = "board";
@@ -373,6 +374,7 @@ int main(int argc, char *argv[]){
                 where = "boards";
                 name = m1[1];
             }
+            else ret = "404";
         }
         
         else if(std::regex_search(s, m, delet) == true){
@@ -380,15 +382,15 @@ int main(int argc, char *argv[]){
             
             std::string s1 = m[1];
             std::smatch m1;
-            std::regex board("^\\/board\\/(.+)$");
-            std::regex boards("^\\/boards\\/(.+)\\/([0-9]+)$");
+            std::regex boards("^\\/board\\/([a-zA-Z0-9]+)$");
+            std::regex board("^\\/boards\\/([a-zA-Z0-9]+)\\/([0-9]+)$");
             
-            if(std::regex_search(s1, m1, board)){
-                where = "board";
+            if(std::regex_search(s1, m1, boards)){
+                where = "boards";
                 name = m1[1];
             }
-            else if(std::regex_search(s1,m1, boards)){
-                where = "boards";
+            else if(std::regex_search(s1,m1, board)){
+                where = "board";
                 name = m1[1];
                 std::string sid = m[2];
                 std::stringstream stream(sid);
@@ -396,17 +398,167 @@ int main(int argc, char *argv[]){
                 stream >> id;
                 
             }
+            else ret = "404";
         }
-        else std::cout << "ziadny regex sa nematchol\n";
+        else ret = "404";
         
         
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////// FOR PARSED MESSAGE ////////////////////////////////////////////////
+        
+        //POST /boards/name
+        if(method == "POST" && where == "boards"){
+            //ak existuje nastenka s danym nazvom, vracia 409
+            bool exist = zoznam->BoardExists(name);
+            if(exist == true){
+                    ret = "409";
+                    message = "Conflict\n";
+            }
+            //vytvori novu prazdnu nastenku typu Board a prida ju na zoznam nasteniek
+            //kod uspecu je 201 pre metodu POST
+            else{
+                Board* new_board = new Board(name);
+                zoznam->AddNewBoard(name, new_board);
+                ret = "201";
+                message = "Created.\n";
+            }
+        }
+        
+        //GET /boards 
+        else if(method == "GET" && where == "boards"){
+            std::vector<std::string> nastenky = zoznam->GetNastenky();
+            //ak ziadna nastenka neexistuje, kod uspechu je 404
+            if(nastenky.empty()){
+                ret = "404"; 
+                message = "Not found.\n";   
+            }
+            //ak zoznam nasteniek nie je prazdny, kod uspechu je 200 
+            else{
+                
+                std::stringstream sss;
+                //std::vector<std::string> naste = zoznam->GetNastenky();
+                for(unsigned int o =0; o<nastenky.size(); o++){
+                    sss << nastenky[o] + "\n";
+                }
+                message = sss.str(); //text do spravy
+                ret = "200";
+                //message = "Ok.";
+            } 
+        }
+        
+        //DELETE /boards/name
+        else if(method == "DELETE" && where == "boards"){
+            //ak nastenka s danym menom neexistuje, vracia 404
+            bool exist = zoznam->BoardExists(name);
+            if(exist==false){
+                ret = "404";
+                message = "Not found.\n";
+            }
+            //odstrani nastenku zo zoznamu a nasledne aj samotnu nastenku
+            else{
+                Board* del = zoznam->GetOdkaz(name);
+                zoznam->DeleteBoard(name);
+                delete del;
+                ret = "200";
+                message = "Ok.\n";
+            }
+        }
+        
+        //GET /board/name
+        else if(method == "GET" && where == "board"){
+            bool exist = zoznam->BoardExists(name);
+            //ak nastenka s danym menom neexistuje, vracia 404
+            if(exist==false){
+                ret = "404";
+                message = "Not found\n";
+            }
+            //vrati obsah nastenky id
+            else{
+                Board* show = zoznam->GetOdkaz(name);
+                show->GetContent();
+                ret = "200";
+            }
+        }
+        
+        //POST /board/name
+        else if(method == "POST" && where == "board"){
+            //ak text ktory chceme vlozit je prazdny, vracia 400
+            if(text.size() == 0){
+                ret = "400";
+                message = "Bad request\n";
+            }
+            bool exist = zoznam->BoardExists(name);
+            //ak nastenka s danym menom neexistuje, vracia 404
+            if(exist==false){
+                ret = "404";
+                message = "Not found\n";
+            }
+            //prida novy prispevok na koniec nastenky
+            else{
+                Board* board = zoznam->GetOdkaz(name);
+                board->AddContent(text);
+                ret = "201";
+                message = "Accepted\n";
+            }
+        }
+        
+        //PUT /board/name/id 
+        else if(method == "PUT" && where == "board"){
+            //ak text ktory chceme vlozit je prazdny, vracia 400
+            if(text.size() == 0){
+                ret = "400";
+                message = "Bad request\n";
+            }
+            //ak nastenka s danym menom neexistuje, vracia 404
+            bool exist = zoznam->BoardExists(name);
+            if(exist==false){
+                ret = "404";
+                message = "Not found\n";
+            }
+            //zmeni obsah nastenky na prispevku id na hodnotu text
+            else{
+                Board* board = zoznam->GetOdkaz(name);
+                board->UpdateContent(id, text);
+                ret = "200";
+                message = "Ok\n";
+            }
+        }
+        
+        //DELETE /board/name/id -
+        else if(method == "DELETE" && where == "board"){
+            bool exist = zoznam->BoardExists(name);
+            //ak nastenka s danym menom neexistuje, vracia 404
+            if(exist==false){
+                ret = "404";
+                message = "Not found\n";
+            }
+            //odstrani prispevok id na nastenke name
+            else{
+                Board* board = zoznam->GetOdkaz(name);
+                board->DeleteContent(id);
+                ret = "200";
+                message = "Ok\n";
+            }
+        }
         
         
+        int m_l = message.length();
+        std::ostringstream str1;
+        str1 << m_l;
+        std::string mess_len = str1.str();
+        
+        std::stringstream ss;
+        ss  << "HTTP/1.1 " << ret << "\n" << "Content-Type: text/plain\nContent-Lenght: " << mess_len << "\n\n" << message << "\n";
+        std::string se = ss.str();
+        
+        int l =se.length();
+        char message_array[l +1];
+        strcpy(message_array, se.c_str());
         
         //sending data(respons) to client
-        //strcpy(buffer, "200 Ok, server is Listening");
-        strcpy(buffer, "HTTP/1.1 200 Ok\nContent-Type: text/plain\nContent-Length: 5\n\ntest\n");
-        std::cout << "Ide tam: \n" << buffer << "\n";
+        strcpy(buffer, message_array);
+        //strcpy(buffer, "HTTP/1.1 200 Ok\nContent-Type: text/plain\nContent-Length: 5\n\ntest\n");
+        //std::cout << "Ide tam: \n" << buffer << "\n";
         size = strlen(buffer);
         i = write(sock, buffer, size);
         if(i != size){
@@ -414,121 +566,7 @@ int main(int argc, char *argv[]){
         }
     }
     
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////// FOR PARSED MESSAGE ////////////////////////////////////////////////
     
-    //POST /boards/name
-    if(method == "POST" && where == "boards"){
-        //ak existuje nastenka s danym nazvom, vracia 409
-        bool exist = zoznam->BoardExists(name);
-        if(exist == true){
-                ret = 409;
-        }
-        //vytvori novu prazdnu nastenku typu Board a prida ju na zoznam nasteniek
-        //kod uspecu je 201 pre metodu POST
-        else{
-            Board* new_board = new Board(name);
-            zoznam->AddNewBoard(name, new_board);
-            ret = 201;
-        }
-    }
-    
-    //GET /boards 
-    else if(method == "GET" && where == "boards"){
-        std::vector<std::string> nastenky = zoznam->GetNastenky();
-        //ak ziadna nastenka neexistuje, kod uspechu je 404
-        if(nastenky.empty()){
-            ret = 404;    
-        }
-        //ak zoznam nasteniek nie je prazdny, kod uspechu je 200 
-        else{
-            ret = 200;
-        } 
-    }
-    
-    //DELETE /boards/name
-    else if(method == "DELETE" && where == "boards"){
-        //ak nastenka s danym menom neexistuje, vracia 404
-        bool exist = zoznam->BoardExists(name);
-        if(exist==false){
-            ret = 404;
-        }
-        //odstrani nastenku zo zoznamu a nasledne aj samotnu nastenku
-        else{
-            Board* del = zoznam->GetOdkaz(name);
-            zoznam->DeleteBoard(name);
-            delete del;
-            ret = 200;
-        }
-    }
-    
-    //GET /board/name
-    else if(method == "GET" && where == "board"){
-        bool exist = zoznam->BoardExists(name);
-        //ak nastenka s danym menom neexistuje, vracia 404
-        if(exist==false){
-            ret = 404;
-        }
-        //vrati obsah nastenky id
-        else{
-            Board* show = zoznam->GetOdkaz(name);
-            show->GetContent();
-            ret = 200;
-        }
-    }
-    
-    //POST /board/name
-    else if(method == "POST" && where == "board"){
-        //ak text ktory chceme vlozit je prazdny, vracia 400
-        if(text.size() == 0){
-            ret = 400;
-        }
-        bool exist = zoznam->BoardExists(name);
-        //ak nastenka s danym menom neexistuje, vracia 404
-        if(exist==false){
-            ret = 404;
-        }
-        //prida novy prispevok na koniec nastenky
-        else{
-            Board* board = zoznam->GetOdkaz(name);
-            board->AddContent(text);
-            ret = 201;
-        }
-    }
-    
-    //PUT /board/name/id 
-    else if(method == "PUT" && where == "board"){
-        //ak text ktory chceme vlozit je prazdny, vracia 400
-        if(text.size() == 0){
-            ret = 400;
-        }
-        //ak nastenka s danym menom neexistuje, vracia 404
-        bool exist = zoznam->BoardExists(name);
-        if(exist==false){
-            ret = 404;
-        }
-        //zmeni obsah nastenky na prispevku id na hodnotu text
-        else{
-            Board* board = zoznam->GetOdkaz(name);
-            board->UpdateContent(id, text);
-            ret = 200;
-        }
-    }
-    
-    //DELETE /board/name/id -
-    else if(method == "DELETE" && where == "board"){
-        bool exist = zoznam->BoardExists(name);
-        //ak nastenka s danym menom neexistuje, vracia 404
-        if(exist==false){
-            ret = 404;
-        }
-        //odstrani prispevok id na nastenke name
-        else{
-            Board* board = zoznam->GetOdkaz(name);
-            board->DeleteContent(id);
-            ret = 200;
-        }
-    }
     
     return 0;
 }
