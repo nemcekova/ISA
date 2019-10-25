@@ -8,7 +8,7 @@
 #include "isaserver.h"
 
 
-#define BUFFER 1024
+#define BUFFER 4096
 #define QUEUE 1
 
 
@@ -48,31 +48,39 @@ class Board{
             }
         }
         
-        void UpdateContent(int id, std::string new_value){
+        bool UpdateContent(int id, std::string new_value){
+            bool ret = false;
             std::map<int,std::string>::iterator it = content.begin();
             for (it=content.begin(); it!=content.end(); ++it){
                 if(it->first == id){
                     it->second = new_value;
+                    ret = true;
                 }
+                
             }
+            return(ret);
         }
         
-        void DeleteContent(int id){
+        bool DeleteContent(int id){
+            bool ret = false;
             std::string key;
             std::map<int,std::string>::iterator it = content.begin();
             for (it=content.begin(); it!=content.end(); ++it){
                 
                 if(it->first == id){
-                std::map<int, std::string>::iterator dupe = it;
-                for(dupe = it; dupe != content.end();++dupe){
-                    key = dupe->second;
-                    it->second = key;
-                    it = dupe;
-                }
+                    ret = true;
+                    std::map<int, std::string>::iterator dupe = it;
+                    for(dupe = it; dupe != content.end();++dupe){
+                        key = dupe->second;
+                        it->second = key;
+                        it = dupe;
+                    }
                 content.erase(it);
+                i--;
                 break;
                 }
             }
+            return(ret);
         }
         
         std::map<int, std::string> GetContent(){
@@ -306,19 +314,18 @@ int main(int argc, char *argv[]){
         
 /////////////////////////////////////////////////////////////////////////////////
 ///////////////////// HEADER PARSING ////////////////////////////////////////////
-        char* pch = strtok(buffer, "\n");
         //std::cout << "Oddelene : \n" << pch << "\n";
         
         
         //zoberie obsah spravy
         std::string buf(buffer);
         std::smatch neviem;
-        std::regex regneviem("^(.+)//\n//\n(.*)$");
-        if(std::regex_search(buf, neviem, regneviem)){
-            std::string nwm = neviem[2];
-            //std::cout << nwm << "\n";
+        std::regex regneviem("^(.+)\\n(.+)\\n(.+)\\n\\n(.+)$");
+        if(std::regex_search(buf, neviem, regneviem) == true){
+            std::string nwm = neviem[4];
             text = nwm;
         }
+        char* pch = strtok(buffer, "\n");
         
         //parsuje hlavicku
         std::string s(pch);
@@ -382,8 +389,8 @@ int main(int argc, char *argv[]){
             
             std::string s1 = m[1];
             std::smatch m1;
-            std::regex boards("^\\/board\\/([a-zA-Z0-9]+)$");
-            std::regex board("^\\/boards\\/([a-zA-Z0-9]+)\\/([0-9]+)$");
+            std::regex boards("^\\/boards\\/([a-zA-Z0-9]+)$");
+            std::regex board("^\\/board\\/([a-zA-Z0-9]+)\\/([0-9]+)$");
             
             if(std::regex_search(s1, m1, boards)){
                 where = "boards";
@@ -392,10 +399,9 @@ int main(int argc, char *argv[]){
             else if(std::regex_search(s1,m1, board)){
                 where = "board";
                 name = m1[1];
-                std::string sid = m[2];
-                std::stringstream stream(sid);
-                id = 0;
-                stream >> id;
+                std::string sid = m1[2];
+                id = std::stoi(sid);
+                std::cout << id << " je id\n";
                 
             }
             else ret = "404";
@@ -403,6 +409,7 @@ int main(int argc, char *argv[]){
         else ret = "404";
         
         
+        std::cout << "metoda:" << method << "\nWhere: " << where << "\n";
         ///////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////// FOR PARSED MESSAGE ////////////////////////////////////////////////
         
@@ -474,10 +481,17 @@ int main(int argc, char *argv[]){
             }
             //vrati obsah nastenky id
             else{
+                //std::cout << "tu som sa dostal \n";
                 Board* show = zoznam->GetOdkaz(name);
-                show->GetContent();
+                std::map<int, std::string> obsah = show->GetContent();
+                std::stringstream ss;
+                std::map<int,std::string>::iterator it = obsah.begin();
+                for (it=obsah.begin(); it!=obsah.end(); ++it){
+                    ss << it->first << " " << it->second << '\n';
+                }
+                message = ss.str();
                 ret = "200";
-            }
+                }
         }
         
         //POST /board/name
@@ -518,9 +532,15 @@ int main(int argc, char *argv[]){
             //zmeni obsah nastenky na prispevku id na hodnotu text
             else{
                 Board* board = zoznam->GetOdkaz(name);
-                board->UpdateContent(id, text);
-                ret = "200";
-                message = "Ok\n";
+                bool result = board->UpdateContent(id, text);
+                if(result == false){
+                    ret = "404";
+                    message = "Not found";
+                }
+                else{        
+                    ret = "200";
+                    message = "Ok\n";
+                }
             }
         }
         
@@ -535,9 +555,15 @@ int main(int argc, char *argv[]){
             //odstrani prispevok id na nastenke name
             else{
                 Board* board = zoznam->GetOdkaz(name);
-                board->DeleteContent(id);
-                ret = "200";
-                message = "Ok\n";
+                bool result = board->DeleteContent(id);
+                if(result == false){
+                    ret = "404";
+                    message = "Not found";
+                }
+                else{
+                    ret = "200";
+                    message = "Ok\n";
+                }
             }
         }
         

@@ -95,6 +95,7 @@ int main(int argc, char *argv[]){
             
             ss << "GET /board/" << name << " HTTP/1.1\n\n";
             message = ss.str();
+            
         }
     }
     else if((strcmp(argv[5], "item") == 0) && (strcmp(argv[6], "update") == 0)){
@@ -108,6 +109,9 @@ int main(int argc, char *argv[]){
             int len = content.length();
             ss << "PUT /board/" << name << "/" << id << " HTTP/1.1\nContent-Type: text/plain\nContent-Length: " << len << "\n\n" << content;
             message = ss.str();
+        }
+        else{
+            std::cout << "Invalid args\n";
         }
     }
     else if(strcmp(argv[5], "item") == 0){
@@ -191,8 +195,37 @@ int main(int argc, char *argv[]){
     
     if ((j = read(sock,buffer, BUFFER)) == -1)   // read the answer from the server
      err(1,"read() failed");
-   else if (j > 0)
-     printf("%.*s",j,buffer);                   // print the answer
+   else if (j > 0){
+  
+       std::string buf(buffer);
+       std::string delimiter = "\n\n";
+       std::string token;
+       size_t pos = 0;
+       int k = 1;
+       
+       //toto rozdeli odpoved podla \n\n ale treba to dako identifikovat na header a body
+       while ((pos = buf.find(delimiter)) != std::string::npos) {
+           std::cout << k << "\n";
+           token = buf.substr(0, pos);
+            std::cout << token << std::endl;
+            buf.erase(0, pos + delimiter.length());
+            k++;
+        }
+        std::cout << k << "\n";
+        std::cout << buf << std::endl;
+       /*std::smatch m;
+       std::regex res_reg("^(.+)\\n(.+)\\n(.+)\\n\\n(.+)$");
+       if(std::regex_search(buf, m, res_reg) == true){
+           std::string header = m[1] + m[2] + m[3];
+           std::string text = m[4];
+           std::cout << header << "\n";
+           std::cout << text << "\n";
+       }*/
+    //char *header = strtok(buffer, "\n\n");
+    //std::cout << header;
+}
+   
+     //printf("%.*s",j,text);                   // print the answer
  
     
     return 0;
