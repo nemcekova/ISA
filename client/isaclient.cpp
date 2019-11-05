@@ -26,11 +26,11 @@
 #include<sstream>
 #define BUFFER 1024
 
+
 int main(int argc, char *argv[]){
     
     char* host;
     char* port;
-    char* command;
     std::string method;
     std::string where;
     std::string name;
@@ -44,7 +44,6 @@ int main(int argc, char *argv[]){
         argumenty.append(argv[i]);
         argumenty.append(" ");
     }
-    //std::cout << argumenty;
     
     if(strcmp(argv[1], "-h") == 0){
         printf("HELP\n");
@@ -105,7 +104,6 @@ int main(int argc, char *argv[]){
         std::regex r("item\\supdate\\s([a-zA-Z0-9]+)\\s([0-9]+)\\s(.+)$");
         if(regex_search(argumenty, m, r) == true){
             content = m[3];
-            //std::cout << content << "\n";
             int len = content.length();
             ss << "PUT /board/" << name << "/" << id << " HTTP/1.1\nContent-Type: text/plain\nContent-Length: " << len << "\n\n" << content;
             message = ss.str();
@@ -124,8 +122,8 @@ int main(int argc, char *argv[]){
             std::regex r("item\\sadd\\s([a-zA-Z0-9]+)\\s(.+)$");
             if(regex_search(argumenty, m, r) == true){
                 content = m[2];
-                std::cout << content << "\n";
                 int len = content.length();
+                
                 ss << "POST /board/" << name << " HTTP/1.1\nContent-Type: text/plain\nContent-Length: " << len << "\n\n" << content;
                 message = ss.str();
             }
@@ -144,13 +142,15 @@ int main(int argc, char *argv[]){
     else{
         fprintf(stderr, "Invalid arguments\n");
     }
+    std::cout << content << "*****\n";
     
     int sock;
     socklen_t leng;
     struct sockaddr_in client;
     struct sockaddr_in server;
     struct hostent *servaddr;
-    char buffer[BUFFER];
+    char buffer1[BUFFER];
+    char buffer2[BUFFER];
     
     memset(&server, 0, sizeof(server));
     memset(&client, 0, sizeof(client));
@@ -186,43 +186,49 @@ int main(int argc, char *argv[]){
     char message_array[l +1];
     strcpy(message_array, message.c_str());
     
-    strcpy(buffer, message_array);
-    int j = write(sock, buffer, 100);
+    strcpy(buffer1, message_array);
+    int j = write(sock, buffer1, 100);
 
     if(j == -1){
         err(1, "write failed");
     }
     
-    if ((j = read(sock,buffer, BUFFER)) == -1)   // read the answer from the server
+    
+    
+    if ((j = read(sock,buffer2, BUFFER)) == -1)   // read the answer from the server
      err(1,"read() failed");
    else if (j > 0){
   
-       std::string buf(buffer);
+       
+       std::string buf(buffer2);
        std::string delimiter = "\n\n";
        std::string token;
+       std::string header;
+       std::string text;
        size_t pos = 0;
-       int k = 1;
+       
        
        //toto rozdeli odpoved podla \n\n ale treba to dako identifikovat na header a body
        while ((pos = buf.find(delimiter)) != std::string::npos) {
-           std::cout << k << "\n";
+           
            token = buf.substr(0, pos);
-            std::cout << token << std::endl;
+            
             buf.erase(0, pos + delimiter.length());
-            k++;
+            if (buf.find(delimiter) == std::string::npos){
+                text = token;
+            }
+            else{
+                header = token;
+            }
+            
         }
-        std::cout << k << "\n";
-        std::cout << buf << std::endl;
-       /*std::smatch m;
-       std::regex res_reg("^(.+)\\n(.+)\\n(.+)\\n\\n(.+)$");
-       if(std::regex_search(buf, m, res_reg) == true){
-           std::string header = m[1] + m[2] + m[3];
-           std::string text = m[4];
-           std::cout << header << "\n";
-           std::cout << text << "\n";
-       }*/
-    //char *header = strtok(buffer, "\n\n");
-    //std::cout << header;
+        
+        std::cout << "header je ---" << header << "---\n";
+        std::cout << "sprava je ***" << text << "***\n";
+        
+    
+        
+
 }
    
      //printf("%.*s",j,text);                   // print the answer

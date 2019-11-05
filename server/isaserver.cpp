@@ -20,12 +20,12 @@ class Board{
     public:
         
         Board(std::string boardname){
-            std::cout << "Hello World!\n";
+            
             name = boardname;
             
         }
         ~Board(){
-            std::cout << "Bye World!\n";
+            
         }
         //std::string name;
         
@@ -115,12 +115,12 @@ public:
     bool BoardExists(std::string BoardName){
         for (unsigned int i = 0; i < nastenky.size(); i++){
             if(BoardName.compare(nastenky[i]) == 0){
-        //        std::cout << "true\n";
+    
                 return true;
             }
             else continue;
         }
-        //std::cout << "false\n";
+        
         return false;
     }
 
@@ -129,7 +129,7 @@ public:
     */
     void AddNewBoard(std::string nazov, Board* nastenka){
         if(std::regex_match(nazov, std::regex("[a-zA-Z0-9]+")) == false){
-            //std::cout << "regex not ok\n";
+            
             //exit(1);
         }
         
@@ -200,59 +200,7 @@ int main(int argc, char *argv[]){
     }
     
     
-//////////////////////////////////////////////////////////////////////////////////    
-    
-/*    //undefined reference to `Board::~Board()'
-    Board* nova = new Board("prva");
-    //Board nova("prva");
-    List zoznam("novy");
-    zoznam.AddNewBoard(nova->GetName());
-    Board nastenka("druha");
-    zoznam.AddNewBoard(nastenka.GetName());
-    
-    Board bbb("tretia");
-    zoznam.AddNewBoard(bbb.GetName());
-    
-    
-    std::vector<std::string> nastenky = zoznam.GetNastenky();
-    for(unsigned int i =0; i<nastenky.size(); i++){
-        std::cout << nastenky[i] + "\n";
-        
-    }
-    
-    delete nova;
-    std::vector<std::string> naste = zoznam.GetNastenky();
-    for(unsigned int o =0; o<naste.size(); o++){
-        std::cout << naste[o] + "\n";
-        
-    }
-    
-    nova->AddContent("aaaaaaaaa\n");
-    nova->AddContent("bbbbbbbbb\n");
-    nova->AddContent("ccccccccc\n");
-    nova->AddContent("ddddddddd\n");
-    nova->AddContent("eeeeeeeee\n");
-    nova->AddContent("fffffffff\n");
-    nova->AddContent("ggggggggg\n");
-    
-    std::map<int, std::string> obsah = nova->GetContent();
-    
-    
-    std::map<int,std::string>::iterator it = obsah.begin();
-    for (it=obsah.begin(); it!=obsah.end(); ++it)
-    std::cout << it->first << " " << it->second << '\n';
-    //nova.AddNewBoard("prva");
-    zoznam.DeleteBoard(nova->GetName());
-    delete nova;
-    printf("------------------------------------\n");
-    nova->DeleteContent(3);
-    
-    std::map<int, std::string> obsa = nova->GetContent();
-     it = obsa.begin();
-    for (it=obsa.begin(); it!=obsa.end(); ++it)
-    std::cout << it->first << " " << it->second << '\n';*/
-    
-    
+  
 /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// SERVER CONNECTION ////////////////////////////////
     
@@ -306,25 +254,42 @@ int main(int argc, char *argv[]){
         
         //receiving data(reguest) from client
         if((size = read(sock, buffer, BUFFER)) > 0){
-            //std::cout << buffer << "\n";
+            
             printf("Received data\n");
-            std::cout << buffer << "\n";
+        
         }
         
         
 /////////////////////////////////////////////////////////////////////////////////
 ///////////////////// HEADER PARSING ////////////////////////////////////////////
-        //std::cout << "Oddelene : \n" << pch << "\n";
+        
         
         
         //zoberie obsah spravy
         std::string buf(buffer);
-        std::smatch neviem;
-        std::regex regneviem("^(.+)\\n(.+)\\n(.+)\\n\\n(.+)$");
-        if(std::regex_search(buf, neviem, regneviem) == true){
-            std::string nwm = neviem[4];
-            text = nwm;
+        int iter = 0;
+        
+        std::string delimiter = "\n\n";
+        std::string token;
+        size_t position = 0;
+        
+        std::cout << buf << '\n';
+        while((position = buf.find(delimiter)) != std::string::npos){
+            token = buf.substr(0, position);
+            
+            
+            size_t pos = buf.length();
+                if((position + 2) < pos){
+                    text = buf.substr((position +2), pos);
+                    std::cout <<text<< "----------\n";
+                }
+            
+                buf.erase(0, position + delimiter.length());
+            
+            iter++;
         }
+        
+        std::cout << text << "\n";
         char* pch = strtok(buffer, "\n");
         
         //parsuje hlavicku
@@ -361,7 +326,7 @@ int main(int argc, char *argv[]){
             std::stringstream stream(sid);
             id = 0;
             stream >> id;
-            //std::cout << where << ", " << name << ", " << id << "\n";
+        
             
         }
         
@@ -401,7 +366,7 @@ int main(int argc, char *argv[]){
                 name = m1[1];
                 std::string sid = m1[2];
                 id = std::stoi(sid);
-                std::cout << id << " je id\n";
+            
                 
             }
             else ret = "404";
@@ -409,7 +374,7 @@ int main(int argc, char *argv[]){
         else ret = "404";
         
         
-        std::cout << "metoda:" << method << "\nWhere: " << where << "\n";
+        
         ///////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////// FOR PARSED MESSAGE ////////////////////////////////////////////////
         
@@ -481,15 +446,21 @@ int main(int argc, char *argv[]){
             }
             //vrati obsah nastenky id
             else{
-                //std::cout << "tu som sa dostal \n";
+                
                 Board* show = zoznam->GetOdkaz(name);
                 std::map<int, std::string> obsah = show->GetContent();
                 std::stringstream ss;
                 std::map<int,std::string>::iterator it = obsah.begin();
                 for (it=obsah.begin(); it!=obsah.end(); ++it){
-                    ss << it->first << " " << it->second << '\n';
+                    ss << it->first << ". " << it->second << '\n';
                 }
-                message = ss.str();
+                message = "[";
+                message += name;
+                message += "]";
+                message += "\n";
+                message += ss.str();
+                
+                //message = ss.str();
                 ret = "200";
                 }
         }
@@ -573,6 +544,8 @@ int main(int argc, char *argv[]){
         str1 << m_l;
         std::string mess_len = str1.str();
         
+        
+        
         std::stringstream ss;
         ss  << "HTTP/1.1 " << ret << "\n" << "Content-Type: text/plain\nContent-Lenght: " << mess_len << "\n\n" << message << "\n";
         std::string se = ss.str();
@@ -583,16 +556,22 @@ int main(int argc, char *argv[]){
         
         //sending data(respons) to client
         strcpy(buffer, message_array);
-        //strcpy(buffer, "HTTP/1.1 200 Ok\nContent-Type: text/plain\nContent-Length: 5\n\ntest\n");
+        
         //std::cout << "Ide tam: \n" << buffer << "\n";
         size = strlen(buffer);
         i = write(sock, buffer, size);
         if(i != size){
             err(1, "write() failed");
         }
-    }
     
     
-    
-    return 0;
+    close(sock);                          // close the new socket
+   printf("* Closing newsock\n");
+}
+ 
+
+ // close the server 
+ close(fd);                               // close an original server socket
+ printf("* Closing the original socket\n");
+ return 0;
 }
