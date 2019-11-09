@@ -205,6 +205,7 @@ int main(int argc, char *argv[]){
 ////////////////////////////// SERVER CONNECTION ////////////////////////////////
     
     
+    
     int fd;
     int sock;
     int leng;
@@ -281,7 +282,11 @@ int main(int argc, char *argv[]){
             size_t pos = buf.length();
                 if((position + 2) < pos){
                     text = buf.substr((position +2), pos);
-                    std::cout <<text<< "----------\n";
+                    
+                    std::size_t found; 
+                    while((found = text.find("\\n")) != std::string::npos){
+                        text.replace(found, 2, "\n");
+                    }
                 }
             
                 buf.erase(0, position + delimiter.length());
@@ -289,7 +294,9 @@ int main(int argc, char *argv[]){
             iter++;
         }
         
-        std::cout << text << "\n";
+        
+        
+        //std::cout << text << "\n";
         char* pch = strtok(buffer, "\n");
         
         //parsuje hlavicku
@@ -369,9 +376,15 @@ int main(int argc, char *argv[]){
             
                 
             }
-            else ret = "404";
+            else{
+             ret = "404 Not found";
+             message = "Not found";
+            }    
         }
-        else ret = "404";
+        else{
+         ret = "404 Not found";
+         message = "Not found";
+        } 
         
         
         
@@ -383,7 +396,7 @@ int main(int argc, char *argv[]){
             //ak existuje nastenka s danym nazvom, vracia 409
             bool exist = zoznam->BoardExists(name);
             if(exist == true){
-                    ret = "409";
+                    ret = "409 Conflict";
                     message = "Conflict\n";
             }
             //vytvori novu prazdnu nastenku typu Board a prida ju na zoznam nasteniek
@@ -391,7 +404,7 @@ int main(int argc, char *argv[]){
             else{
                 Board* new_board = new Board(name);
                 zoznam->AddNewBoard(name, new_board);
-                ret = "201";
+                ret = "201 Created";
                 message = "Created.\n";
             }
         }
@@ -401,7 +414,7 @@ int main(int argc, char *argv[]){
             std::vector<std::string> nastenky = zoznam->GetNastenky();
             //ak ziadna nastenka neexistuje, kod uspechu je 404
             if(nastenky.empty()){
-                ret = "404"; 
+                ret = "404 Not found"; 
                 message = "Not found.\n";   
             }
             //ak zoznam nasteniek nie je prazdny, kod uspechu je 200 
@@ -413,7 +426,7 @@ int main(int argc, char *argv[]){
                     sss << nastenky[o] + "\n";
                 }
                 message = sss.str(); //text do spravy
-                ret = "200";
+                ret = "200 Ok";
                 //message = "Ok.";
             } 
         }
@@ -423,7 +436,7 @@ int main(int argc, char *argv[]){
             //ak nastenka s danym menom neexistuje, vracia 404
             bool exist = zoznam->BoardExists(name);
             if(exist==false){
-                ret = "404";
+                ret = "404 Not found";
                 message = "Not found.\n";
             }
             //odstrani nastenku zo zoznamu a nasledne aj samotnu nastenku
@@ -431,7 +444,7 @@ int main(int argc, char *argv[]){
                 Board* del = zoznam->GetOdkaz(name);
                 zoznam->DeleteBoard(name);
                 delete del;
-                ret = "200";
+                ret = "200 Ok";
                 message = "Ok.\n";
             }
         }
@@ -441,7 +454,7 @@ int main(int argc, char *argv[]){
             bool exist = zoznam->BoardExists(name);
             //ak nastenka s danym menom neexistuje, vracia 404
             if(exist==false){
-                ret = "404";
+                ret = "404 Not found";
                 message = "Not found\n";
             }
             //vrati obsah nastenky id
@@ -461,7 +474,7 @@ int main(int argc, char *argv[]){
                 message += ss.str();
                 
                 //message = ss.str();
-                ret = "200";
+                ret = "200 Ok";
                 }
         }
         
@@ -469,21 +482,21 @@ int main(int argc, char *argv[]){
         else if(method == "POST" && where == "board"){
             //ak text ktory chceme vlozit je prazdny, vracia 400
             if(text.size() == 0){
-                ret = "400";
+                ret = "400 Bad request";
                 message = "Bad request\n";
             }
             bool exist = zoznam->BoardExists(name);
             //ak nastenka s danym menom neexistuje, vracia 404
             if(exist==false){
-                ret = "404";
+                ret = "404 Not found";
                 message = "Not found\n";
             }
             //prida novy prispevok na koniec nastenky
             else{
                 Board* board = zoznam->GetOdkaz(name);
                 board->AddContent(text);
-                ret = "201";
-                message = "Accepted\n";
+                ret = "201 Created";
+                message = "Created\n";
             }
         }
         
@@ -491,13 +504,13 @@ int main(int argc, char *argv[]){
         else if(method == "PUT" && where == "board"){
             //ak text ktory chceme vlozit je prazdny, vracia 400
             if(text.size() == 0){
-                ret = "400";
+                ret = "400 Bad request";
                 message = "Bad request\n";
             }
             //ak nastenka s danym menom neexistuje, vracia 404
             bool exist = zoznam->BoardExists(name);
             if(exist==false){
-                ret = "404";
+                ret = "404 Not found";
                 message = "Not found\n";
             }
             //zmeni obsah nastenky na prispevku id na hodnotu text
@@ -505,11 +518,11 @@ int main(int argc, char *argv[]){
                 Board* board = zoznam->GetOdkaz(name);
                 bool result = board->UpdateContent(id, text);
                 if(result == false){
-                    ret = "404";
+                    ret = "404 Not found";
                     message = "Not found";
                 }
                 else{        
-                    ret = "200";
+                    ret = "200 Ok";
                     message = "Ok\n";
                 }
             }
@@ -520,7 +533,7 @@ int main(int argc, char *argv[]){
             bool exist = zoznam->BoardExists(name);
             //ak nastenka s danym menom neexistuje, vracia 404
             if(exist==false){
-                ret = "404";
+                ret = "404 Not found";
                 message = "Not found\n";
             }
             //odstrani prispevok id na nastenke name
@@ -528,11 +541,11 @@ int main(int argc, char *argv[]){
                 Board* board = zoznam->GetOdkaz(name);
                 bool result = board->DeleteContent(id);
                 if(result == false){
-                    ret = "404";
+                    ret = "404 Not found";
                     message = "Not found";
                 }
                 else{
-                    ret = "200";
+                    ret = "200 Ok";
                     message = "Ok\n";
                 }
             }
@@ -563,15 +576,9 @@ int main(int argc, char *argv[]){
         if(i != size){
             err(1, "write() failed");
         }
-    
-    
-    close(sock);                          // close the new socket
-   printf("* Closing newsock\n");
 }
  
 
  // close the server 
- close(fd);                               // close an original server socket
- printf("* Closing the original socket\n");
  return 0;
 }

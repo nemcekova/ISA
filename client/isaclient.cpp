@@ -29,6 +29,7 @@
 
 int main(int argc, char *argv[]){
     
+    int ret;
     char* host;
     char* port;
     std::string method;
@@ -47,7 +48,7 @@ int main(int argc, char *argv[]){
     
     if(strcmp(argv[1], "-h") == 0){
         printf("HELP\n");
-        exit(0);
+        return(0);
     }
     
     else if((strcmp(argv[1], "-H") == 0) && (strcmp(argv[3], "-p") == 0)){
@@ -110,6 +111,7 @@ int main(int argc, char *argv[]){
         }
         else{
             std::cout << "Invalid args\n";
+            return(-1);
         }
     }
     else if(strcmp(argv[5], "item") == 0){
@@ -140,9 +142,10 @@ int main(int argc, char *argv[]){
         }
     }
     else{
-        fprintf(stderr, "Invalid arguments\n");
+        std::cerr << "Invalid arguments\n";
+        return(-1);
     }
-    std::cout << content << "*****\n";
+    
     
     int sock;
     socklen_t leng;
@@ -172,7 +175,10 @@ int main(int argc, char *argv[]){
     //printf("socket was created\n");
     
     if(connect(sock, (struct sockaddr*)&server, sizeof(server)) == -1){
-        err(1, "could not connect to server");
+        std::cerr << "Couldnt connect to server\n";
+        exit(1);
+        
+        //err(1, "could not connect to server");
     }
     
     leng = sizeof(client);
@@ -223,16 +229,27 @@ int main(int argc, char *argv[]){
             
         }
         
-        std::cout << "header je ---" << header << "---\n";
+        std::regex r("^HTTP/1.1 (.+)\n");
+        std::smatch m;
+        std::string code;
+        if (std::regex_search(header, m, r)) {
+            code = m[1];
+            
+            if(code == "200 Ok" || code == "201 Created"){
+                ret = 0;
+            }
+            else{
+                ret = -1;
+            }
+        }
+        
+        std::cerr << "header je ---" << header << "---\n";
         std::cout << "sprava je ***" << text << "***\n";
         
     
         
 
 }
-   
-     //printf("%.*s",j,text);                   // print the answer
- 
     
-    return 0;
+    return(ret);
 }
