@@ -203,9 +203,7 @@ int main(int argc, char *argv[]){
   
 /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// SERVER CONNECTION ////////////////////////////////
-    
-    
-    
+
     int fd;
     int sock;
     int leng;
@@ -221,8 +219,11 @@ int main(int argc, char *argv[]){
     struct sockaddr_in server;
     struct sockaddr_in client;
     char buffer[BUFFER];
+    
+    //vytvorenie objektu List pre zapisvanie a zapamatavanie nasteniek
     List* zoznam = new List("novy");
     
+    //vytvorenie a nastavenie socketu
     if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
         fprintf(stderr, "could not create socket\n" );
     }
@@ -232,7 +233,7 @@ int main(int argc, char *argv[]){
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(atoi(portnum));
     
-    //bind socket to port
+    //spojí socket s portom
     if(bind(fd, (struct sockaddr *)&server, sizeof(server)) < 0){
         err(1,"binding failed");
     }
@@ -245,17 +246,16 @@ int main(int argc, char *argv[]){
     
     leng = sizeof(client);
     
-    //waiting for client
+    //čaká na klienta
     while(1){
-        //connecting client
+        //pripojenie sa ku klientovi
         if((sock = accept(fd, (struct sockaddr *)&client, (socklen_t *)&leng)) == -1){
             err(1, "accept failed");
         }
         printf("connection accepted\n");
         
-        //receiving data(reguest) from client
+        //prijímanie dát od klienta
         if((size = read(sock, buffer, BUFFER)) > 0){
-            
             printf("Received data\n");
         
         }
@@ -264,39 +264,35 @@ int main(int argc, char *argv[]){
 /////////////////////////////////////////////////////////////////////////////////
 ///////////////////// HEADER PARSING ////////////////////////////////////////////
         
-        
-        
-        //zoberie obsah spravy
+        //char to string
         std::string buf(buffer);
         int iter = 0;
         
+        //oddeli obsah správy na miesto znaku "\n\n"
         std::string delimiter = "\n\n";
         std::string token;
         size_t position = 0;
         
-        std::cout << buf << '\n';
+        //hľadá pozíciu znaku v načítanej správe v bufferi
         while((position = buf.find(delimiter)) != std::string::npos){
             token = buf.substr(0, position);
-            
-            
             size_t pos = buf.length();
+            
+            //ak je nájdený znak na konci správy,správa nemá žiadny obsah
                 if((position + 2) < pos){
                     text = buf.substr((position +2), pos);
                     
+                    //vo viacriadkovom príspevku nahradí reťazec "\n" novym riadkom
                     std::size_t found; 
                     while((found = text.find("\\n")) != std::string::npos){
                         text.replace(found, 2, "\n");
                     }
                 }
-            
                 buf.erase(0, position + delimiter.length());
-            
-            iter++;
+                iter++;
         }
         
-        
-        
-        //std::cout << text << "\n";
+        //oddelí prvý riadok hlavičky
         char* pch = strtok(buffer, "\n");
         
         //parsuje hlavicku
@@ -307,9 +303,9 @@ int main(int argc, char *argv[]){
         std::regex post("^POST\\s(\\/.*)\\sHTTP\\/1.1$");
         std::regex delet("^DELETE\\s(\\/.*)\\sHTTP\\/1.1$");
         
+        //HTTP požiadavka GET, preparsovanie a nastavenie premenných
         if (std::regex_search(s, m, get) == true){
             method = "GET";
-            
             std::string s1 = m[1];
             std::smatch m1;
             std::regex board("^\\/board\\/([a-zA-Z0-9]+)$");
@@ -325,6 +321,7 @@ int main(int argc, char *argv[]){
             else ret = "404";
         }
         
+        //HTTP požiadavka PUT preparsovanie a nastavenie premenných
         else if (std::regex_search(s, m, put) == true){
             method = "PUT";
             where = "board";
@@ -333,13 +330,11 @@ int main(int argc, char *argv[]){
             std::stringstream stream(sid);
             id = 0;
             stream >> id;
-        
-            
         }
         
+        //HTTP požiadavka POST preparsovanie a nastavenie premenných
         else if(std::regex_search(s, m, post) == true){
             method = "POST";
-            
             std::string s1 = m[1];
             std::smatch m1;
             std::regex board("^\\/board\\/([a-zA-Z0-9]+)$");
@@ -356,9 +351,9 @@ int main(int argc, char *argv[]){
             else ret = "404";
         }
         
+        //HTTP požiadavka DELETE preparsovanie a nastavenie premenných
         else if(std::regex_search(s, m, delet) == true){
             method = "DELETE";
-            
             std::string s1 = m[1];
             std::smatch m1;
             std::regex boards("^\\/boards\\/([a-zA-Z0-9]+)$");
@@ -373,8 +368,6 @@ int main(int argc, char *argv[]){
                 name = m1[1];
                 std::string sid = m1[2];
                 id = std::stoi(sid);
-            
-                
             }
             else{
              ret = "404 Not found";
@@ -551,34 +544,31 @@ int main(int argc, char *argv[]){
             }
         }
         
-        
+        //vyrátanie dĺžky obsahu správy
         int m_l = message.length();
         std::ostringstream str1;
         str1 << m_l;
         std::string mess_len = str1.str();
         
         
-        
+        //zostavenie správy
         std::stringstream ss;
         ss  << "HTTP/1.1 " << ret << "\n" << "Content-Type: text/plain\nContent-Lenght: " << mess_len << "\n\n" << message << "\n";
-        std::string se = ss.str();
+        std::string send = ss.str();
         
-        int l =se.length();
+        //vyrátanie veľkosti správy
+        int l =send.length();
         char message_array[l +1];
-        strcpy(message_array, se.c_str());
+        strcpy(message_array, send.c_str());
         
-        //sending data(respons) to client
+        //odoslanie odpovede klientovi
         strcpy(buffer, message_array);
-        
-        //std::cout << "Ide tam: \n" << buffer << "\n";
         size = strlen(buffer);
         i = write(sock, buffer, size);
         if(i != size){
             err(1, "write() failed");
         }
 }
- 
 
- // close the server 
  return 0;
 }
