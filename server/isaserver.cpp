@@ -18,17 +18,15 @@
 class Board{
     std::string name;
     public:
-        
+        //konštruktor objektu 
         Board(std::string boardname){
-            
             name = boardname;
-            
         }
-        ~Board(){
-            
+        //deštruktor objektu
+        ~Board(){    
         }
-        //std::string name;
         
+        //funkcia vráti názov nástenky
         std::string GetName(){
             return(name);
         }
@@ -48,28 +46,35 @@ class Board{
             }
         }
         
+        /*
+        *funkcia aktualizuje obsah príspevku na pozícií id
+        */
         bool UpdateContent(int id, std::string new_value){
             bool ret = false;
+            //vyhľadávanie príspevku číslo id
             std::map<int,std::string>::iterator it = content.begin();
             for (it=content.begin(); it!=content.end(); ++it){
                 if(it->first == id){
                     it->second = new_value;
                     ret = true;
                 }
-                
             }
+            //vráti true ak bol príspevok nájdený a existuje, vráti false ak príspevok neexistuje
             return(ret);
         }
-        
+        /*
+        *funkcia vymaže príspevok s číslom ida všetky ostatným príspevkom zmení id tak, aby išli v poradí
+        */
         bool DeleteContent(int id){
             bool ret = false;
             std::string key;
             std::map<int,std::string>::iterator it = content.begin();
+            
             for (it=content.begin(); it!=content.end(); ++it){
-                
                 if(it->first == id){
                     ret = true;
                     std::map<int, std::string>::iterator dupe = it;
+                    //zmena id po vymazani prispevku
                     for(dupe = it; dupe != content.end();++dupe){
                         key = dupe->second;
                         it->second = key;
@@ -82,7 +87,9 @@ class Board{
             }
             return(ret);
         }
-        
+        /*
+        *vráti obsah nástenky
+        */
         std::map<int, std::string> GetContent(){
             return(content);
         }
@@ -99,40 +106,37 @@ class Board{
 class List{
     std::string name;
     std::vector<std::string> nastenky; // zoznam aktualnych nasteniek
-    std::map<std::string, Board*> odkazy;
+    std::map<std::string, Board*> odkazy; //zoznam odkazov na nástenky
 public:
+    //koštruktor zoznamu
     List(std::string listname){
         name = listname;
     }
-    
+    //deštruktor zoznamu
     ~List(){
         name = "";
     }
 
     /*
-    *Checks if board with specific name already exists
+    *skontroluje či nástenka s daným menom už existuje
     */
     bool BoardExists(std::string BoardName){
         for (unsigned int i = 0; i < nastenky.size(); i++){
             if(BoardName.compare(nastenky[i]) == 0){
-    
                 return true;
             }
             else continue;
         }
-        
         return false;
     }
 
     /*  
-    * add new board to the list 
+    * pridá novú nástenku na zaznom 
     */
     void AddNewBoard(std::string nazov, Board* nastenka){
-        if(std::regex_match(nazov, std::regex("[a-zA-Z0-9]+")) == false){
-            
+        /*if(std::regex_match(nazov, std::regex("[a-zA-Z0-9]+")) == false){
             //exit(1);
-        }
-        
+        }*/
         bool exists = BoardExists(nazov);
         if(exists == false){
             nastenky.push_back(nazov);
@@ -141,11 +145,10 @@ public:
     }
     
     /*
-    *delete board from the list of boards
+    *vymaže nástenku zo zoznamu
     */
     void DeleteBoard(std::string nazov){
         std::vector<std::string>::iterator it;
-        
         it = find(nastenky.begin(), nastenky.end(), nazov);
         if(it != nastenky.end()){
             nastenky.erase(it);
@@ -154,12 +157,15 @@ public:
     }
     
     /*
-    *returns list of boards
+    *vráti zoznam násteniek
     */
     std::vector<std::string> GetNastenky(){
         return(nastenky);
     }
     
+    /*
+    *vráti odkaz na konkrétnu nástenku s názvom key
+    */
     Board* GetOdkaz(std::string key){
         bool exists = BoardExists(key);
         if( exists == true){
@@ -176,6 +182,9 @@ public:
 
 int main(int argc, char *argv[]){
     char *portnum;
+    /*
+    *kontrola argumentov
+    */
     if(argc > 3){
         printf("Too many arguments\n");
         return 0;
@@ -184,10 +193,9 @@ int main(int argc, char *argv[]){
     while ((opt = getopt(argc, argv, ":hp")) != -1) {
         switch (opt) {
             case 'h':
-                printf("HELP\n");
+                printf("Vitajte v programe isaserver.cpp - projekt do predmetu ISA.\nServer spustíte príkazom ./isaserver -p <port>\nNa serveri je možné vytvárať nástenky a ukldať do nej jednoriadkové alebo viacriadkové príspevky\n");
                 break;
             case 'p':
-                printf("PORT\n");
                 continue;
             default:
                 printf("Invalid argument\n");
@@ -267,9 +275,9 @@ int main(int argc, char *argv[]){
         //char to string
         std::string buf(buffer);
         int iter = 0;
-        
+        std::cout << buf << "----\n";
         //oddeli obsah správy na miesto znaku "\n\n"
-        std::string delimiter = "\n\n";
+        std::string delimiter = "\r\n\r\n";
         std::string token;
         size_t position = 0;
         
@@ -279,8 +287,8 @@ int main(int argc, char *argv[]){
             size_t pos = buf.length();
             
             //ak je nájdený znak na konci správy,správa nemá žiadny obsah
-                if((position + 2) < pos){
-                    text = buf.substr((position +2), pos);
+                if((position + 4) < pos){
+                    text = buf.substr((position +4), pos);
                     
                     //vo viacriadkovom príspevku nahradí reťazec "\n" novym riadkom
                     std::size_t found; 
@@ -293,7 +301,7 @@ int main(int argc, char *argv[]){
         }
         
         //oddelí prvý riadok hlavičky
-        char* pch = strtok(buffer, "\n");
+        char* pch = strtok(buffer, "\r\n");
         
         //parsuje hlavicku
         std::string s(pch);
@@ -390,7 +398,7 @@ int main(int argc, char *argv[]){
             bool exist = zoznam->BoardExists(name);
             if(exist == true){
                     ret = "409 Conflict";
-                    message = "Conflict\n";
+                    message = "Conflict";
             }
             //vytvori novu prazdnu nastenku typu Board a prida ju na zoznam nasteniek
             //kod uspecu je 201 pre metodu POST
@@ -398,7 +406,7 @@ int main(int argc, char *argv[]){
                 Board* new_board = new Board(name);
                 zoznam->AddNewBoard(name, new_board);
                 ret = "201 Created";
-                message = "Created.\n";
+                message = "Created.";
             }
         }
         
@@ -408,7 +416,7 @@ int main(int argc, char *argv[]){
             //ak ziadna nastenka neexistuje, kod uspechu je 404
             if(nastenky.empty()){
                 ret = "404 Not found"; 
-                message = "Not found.\n";   
+                message = "Not found.";   
             }
             //ak zoznam nasteniek nie je prazdny, kod uspechu je 200 
             else{
@@ -430,7 +438,7 @@ int main(int argc, char *argv[]){
             bool exist = zoznam->BoardExists(name);
             if(exist==false){
                 ret = "404 Not found";
-                message = "Not found.\n";
+                message = "Not found.";
             }
             //odstrani nastenku zo zoznamu a nasledne aj samotnu nastenku
             else{
@@ -438,7 +446,7 @@ int main(int argc, char *argv[]){
                 zoznam->DeleteBoard(name);
                 delete del;
                 ret = "200 Ok";
-                message = "Ok.\n";
+                message = "Ok.";
             }
         }
         
@@ -448,7 +456,7 @@ int main(int argc, char *argv[]){
             //ak nastenka s danym menom neexistuje, vracia 404
             if(exist==false){
                 ret = "404 Not found";
-                message = "Not found\n";
+                message = "Not found";
             }
             //vrati obsah nastenky id
             else{
@@ -458,6 +466,7 @@ int main(int argc, char *argv[]){
                 std::stringstream ss;
                 std::map<int,std::string>::iterator it = obsah.begin();
                 for (it=obsah.begin(); it!=obsah.end(); ++it){
+                    std::cout << it->second;
                     ss << it->first << ". " << it->second << '\n';
                 }
                 message = "[";
@@ -466,6 +475,7 @@ int main(int argc, char *argv[]){
                 message += "\n";
                 message += ss.str();
                 
+            
                 //message = ss.str();
                 ret = "200 Ok";
                 }
@@ -476,20 +486,20 @@ int main(int argc, char *argv[]){
             //ak text ktory chceme vlozit je prazdny, vracia 400
             if(text.size() == 0){
                 ret = "400 Bad request";
-                message = "Bad request\n";
+                message = "Bad request";
             }
             bool exist = zoznam->BoardExists(name);
             //ak nastenka s danym menom neexistuje, vracia 404
             if(exist==false){
                 ret = "404 Not found";
-                message = "Not found\n";
+                message = "Not found";
             }
             //prida novy prispevok na koniec nastenky
             else{
                 Board* board = zoznam->GetOdkaz(name);
                 board->AddContent(text);
                 ret = "201 Created";
-                message = "Created\n";
+                message = "Created";
             }
         }
         
@@ -498,13 +508,13 @@ int main(int argc, char *argv[]){
             //ak text ktory chceme vlozit je prazdny, vracia 400
             if(text.size() == 0){
                 ret = "400 Bad request";
-                message = "Bad request\n";
+                message = "Bad request";
             }
             //ak nastenka s danym menom neexistuje, vracia 404
             bool exist = zoznam->BoardExists(name);
             if(exist==false){
                 ret = "404 Not found";
-                message = "Not found\n";
+                message = "Not found";
             }
             //zmeni obsah nastenky na prispevku id na hodnotu text
             else{
@@ -516,7 +526,7 @@ int main(int argc, char *argv[]){
                 }
                 else{        
                     ret = "200 Ok";
-                    message = "Ok\n";
+                    message = "Ok";
                 }
             }
         }
@@ -527,7 +537,7 @@ int main(int argc, char *argv[]){
             //ak nastenka s danym menom neexistuje, vracia 404
             if(exist==false){
                 ret = "404 Not found";
-                message = "Not found\n";
+                message = "Not found";
             }
             //odstrani prispevok id na nastenke name
             else{
@@ -539,7 +549,7 @@ int main(int argc, char *argv[]){
                 }
                 else{
                     ret = "200 Ok";
-                    message = "Ok\n";
+                    message = "Ok";
                 }
             }
         }
@@ -553,21 +563,26 @@ int main(int argc, char *argv[]){
         
         //zostavenie správy
         std::stringstream ss;
-        ss  << "HTTP/1.1 " << ret << "\n" << "Content-Type: text/plain\nContent-Lenght: " << mess_len << "\n\n" << message << "\n";
+        ss  << "HTTP/1.1 " << ret << "\r\n" << "Content-Type: text/plain\r\nContent-Lenght: " << mess_len << "\r\n\r\n" << message;
         std::string send = ss.str();
         
         //vyrátanie veľkosti správy
         int l =send.length();
-        char message_array[l +1];
+        char *message_array = new char[l +1];
         strcpy(message_array, send.c_str());
-        
+        std::cout << message_array << "\n-------message sent\n";
         //odoslanie odpovede klientovi
         strcpy(buffer, message_array);
         size = strlen(buffer);
+        std::cout << size << "----size\n";
         i = write(sock, buffer, size);
         if(i != size){
             err(1, "write() failed");
         }
+        //std::cout << buffer << "\n******buffer\n";
+        
+        //zatvorenie socketu a cakanie na dalsieho klienta
+        close(sock);  
 }
 
  return 0;

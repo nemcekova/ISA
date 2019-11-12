@@ -24,7 +24,7 @@
 #include<iterator>
 #include<regex>
 #include<sstream>
-#define BUFFER 1024
+#define BUFFER 4096
 
 
 int main(int argc, char *argv[]){
@@ -54,6 +54,10 @@ int main(int argc, char *argv[]){
         return(0);
     }
     
+    else if(argc < 6){
+        std::cerr << "Invalid arguments\n";
+        return(-1);
+    }
     //-H nastaví host, -p nastaví číslo portu
     else if((strcmp(argv[1], "-H") == 0) && (strcmp(argv[3], "-p") == 0)){
         host = argv[2];
@@ -64,7 +68,6 @@ int main(int argc, char *argv[]){
         port = argv[2];
         host = argv[4];    
     }
-    
     else{
         fprintf(stderr, "Invalid arguments\n");
         return(-1);
@@ -85,13 +88,13 @@ int main(int argc, char *argv[]){
         //board add <name>
         if (strcmp(argv[6], "add") == 0){
             name = argv[7];
-            ss << "POST /boards/" << name << " HTTP/1.1\n\n";
+            ss << "POST /boards/" << name << " HTTP/1.1\r\n\r\n";
             message = ss.str(); 
         }
         //board delete <name>
         else if(strcmp(argv[6], "delete") == 0){
             name = argv[7];
-            ss << "DELETE /boards/" << name << " HTTP/1.1\n\n";
+            ss << "DELETE /boards/" << name << " HTTP/1.1\r\n\r\n";
             message = ss.str();
         }
         //board list <name>
@@ -99,7 +102,7 @@ int main(int argc, char *argv[]){
             method = "GET";
             where = "board";
             name = argv[7];
-            ss << "GET /board/" << name << " HTTP/1.1\n\n";
+            ss << "GET /board/" << name << " HTTP/1.1\r\n\r\n";
             message = ss.str();
         }
     }
@@ -112,7 +115,7 @@ int main(int argc, char *argv[]){
         if(regex_search(argumenty, m, r) == true){
             content = m[3];
             int len = content.length();
-            ss << "PUT /board/" << name << "/" << id << " HTTP/1.1\nContent-Type: text/plain\nContent-Length: " << len << "\n\n" << content;
+            ss << "PUT /board/" << name << "/" << id << " HTTP/1.1\r\nContent-Type: text/plain\r\nContent-Length: " << len << "\r\n\r\n" << content;
             message = ss.str();
         }
         else{
@@ -132,7 +135,7 @@ int main(int argc, char *argv[]){
             if(regex_search(argumenty, m, r) == true){
                 content = m[2];
                 int len = content.length();
-                ss << "POST /board/" << name << " HTTP/1.1\nContent-Type: text/plain\nContent-Length: " << len << "\n\n" << content;
+                ss << "POST /board/" << name << " HTTP/1.1\r\nContent-Type: text/plain\r\nContent-Length: " << len << "\r\n\r\n" << content;
                 message = ss.str();
             }
         }
@@ -143,7 +146,7 @@ int main(int argc, char *argv[]){
             where = "board";
             name = argv[7];
             id = argv[8];
-            ss << "DELETE /board/" << name << "/" << id << " HTTP/1.1\n\n";
+            ss << "DELETE /board/" << name << "/" << id << " HTTP/1.1\r\n\r\n";
             message = ss.str();
         }
     }
@@ -194,9 +197,10 @@ int main(int argc, char *argv[]){
     
     //vyrátanie veľkosti správy
     int l = message.length();
-    char message_array[l +1];
+    char* message_array = new char[l +1];
     strcpy(message_array, message.c_str());
     
+    std::cout << message_array << "\n";
     //odoslanie správy na server
     strcpy(buffer1, message_array);
     int j = write(sock, buffer1, 100);
@@ -211,26 +215,19 @@ int main(int argc, char *argv[]){
     }
    else if (j > 0){
        std::string buf(buffer2);
-       std::string delimiter = "\n\n";
+       std::cout << buf << "*****buffer\n";
+       std::string delimiter = "\r\n\r\n";
        std::string token;
        std::string header;
        std::string text;
-       size_t pos = 0;
-       
-       //oddelenie hlavičky a tela správy podľa znaku "\n\n"
-       while ((pos = buf.find(delimiter)) != std::string::npos) {
-           token = buf.substr(0, pos);
-            buf.erase(0, pos + delimiter.length());
-            if (buf.find(delimiter) == std::string::npos){
-                text = token;
-            }
-            else{
-                header = token;
-            }
-        }
+
+        
+        std::size_t position = buf.find("\r\n\r\n");
+        header = buf.substr(0, position);
+        text = buf.substr(position + 4, std::string::npos);
         
         //zistenie úspešnosti akcie na serveri
-        std::regex r("^HTTP/1.1 (.+)\n");
+        std::regex r("^HTTP/1.1 (.+)\r\n");
         std::smatch m;
         std::string code;
         if (std::regex_search(header, m, r)) {
@@ -245,11 +242,14 @@ int main(int argc, char *argv[]){
                 ret = -1;
             }
         }
+        else{
+            std::cout << "nenasiel to ten skurveny regex\n";
+        }
         //vypísanie odpovede
         //hlavičku na chybový výstup
         //telo správy na štandardný výstup
-        std::cerr << "header je ---" << header << "---\n";
-        std::cout << "sprava je ***" << text << "***\n";
+        std::cerr << "header: " << header << "\n";
+        std::cout << "content: " << text << "\n";
     }
     return(ret);
 }
