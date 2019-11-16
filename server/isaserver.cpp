@@ -226,7 +226,7 @@ int main(int argc, char *argv[]){
     std::string message;
     struct sockaddr_in server;
     struct sockaddr_in client;
-    char buffer[BUFFER];
+    char buffer[BUFFER+1] = {0};
     
     //vytvorenie objektu List pre zapisvanie a zapamatavanie nasteniek
     List* zoznam = new List("novy");
@@ -265,6 +265,8 @@ int main(int argc, char *argv[]){
         //prijímanie dát od klienta
         if((size = read(sock, buffer, BUFFER)) > 0){
             printf("Received data\n");
+            buffer[size] = 0;
+            std::cout << "\n\n\n" << buffer << "\n\n\n";
         
         }
         
@@ -563,7 +565,7 @@ int main(int argc, char *argv[]){
         
         //zostavenie správy
         std::stringstream ss;
-        ss  << "HTTP/1.1 " << ret << "\r\n" << "Content-Type: text/plain\r\nContent-Lenght: " << mess_len << "\r\n\r\n" << message;
+        ss  << "HTTP/1.1 " << ret << "\r\n" << "Content-Type: text/plain\r\nContent-Lenght: " << mess_len << "\r\n\r\n" << message << "\n";
         std::string send = ss.str();
         
         //vyrátanie veľkosti správy
@@ -572,15 +574,19 @@ int main(int argc, char *argv[]){
         strcpy(message_array, send.c_str());
         std::cout << message_array << "\n-------message sent\n";
         //odoslanie odpovede klientovi
-        strcpy(buffer, message_array);
-        size = strlen(buffer);
+        //---memset(buffer, 0, sizeof(BUFFER));
+        //---strcpy(buffer, message_array);
+        //size = strlen(buffer);
+        size = strlen(send.c_str());
         std::cout << size << "----size\n";
-        i = write(sock, buffer, size);
+        //---i = write(sock, buffer, size);
+        i = write(sock, send.c_str(), size);
         if(i != size){
             err(1, "write() failed");
         }
         //std::cout << buffer << "\n******buffer\n";
         
+        memset(buffer, 0, sizeof(BUFFER));
         //zatvorenie socketu a cakanie na dalsieho klienta
         close(sock);  
 }
