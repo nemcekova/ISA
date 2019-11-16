@@ -186,19 +186,20 @@ int main(int argc, char *argv[]){
     *kontrola argumentov
     */
     if(argc > 3){
-        printf("Too many arguments\n");
+        std::cerr << "Too many arguments\n";
         return 0;
     }
     int opt;
     while ((opt = getopt(argc, argv, ":hp")) != -1) {
         switch (opt) {
             case 'h':
-                printf("Vitajte v programe isaserver.cpp - projekt do predmetu ISA.\nServer spustíte príkazom ./isaserver -p <port>\nNa serveri je možné vytvárať nástenky a ukldať do nej jednoriadkové alebo viacriadkové príspevky\n");
-                break;
+                std::cout << "Vitajte v programe isaserver.cpp - projekt do predmetu ISA.\nServer spustíte príkazom ./isaserver -p <port>\nNa serveri je možné vytvárať nástenky a ukldať do nej jednoriadkové alebo viacriadkové príspevky\n";
+                exit(0);
             case 'p':
                 continue;
             default:
-                printf("Invalid argument\n");
+                std::cerr << "Invalid arguments\n";
+                std::cout << "Vitajte v programe isaserver.cpp - projekt do predmetu ISA.\nServer spustíte príkazom ./isaserver -p <port>\nNa serveri je možné vytvárať nástenky a ukldať do nej jednoriadkové alebo viacriadkové príspevky\n";
                 exit(-1);
         }
     }
@@ -233,9 +234,9 @@ int main(int argc, char *argv[]){
     
     //vytvorenie a nastavenie socketu
     if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-        fprintf(stderr, "could not create socket\n" );
+        err(1,"could not create socket");
     }
-    printf("socket created\n");
+
     
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
@@ -245,12 +246,10 @@ int main(int argc, char *argv[]){
     if(bind(fd, (struct sockaddr *)&server, sizeof(server)) < 0){
         err(1,"binding failed");
     }
-    printf("Binding succesfull\n");
     
     if(listen(fd, QUEUE) != 0){
         err(1, "Listen() not possible");
     }
-    printf("Listening...\n");
     
     leng = sizeof(client);
     
@@ -260,14 +259,11 @@ int main(int argc, char *argv[]){
         if((sock = accept(fd, (struct sockaddr *)&client, (socklen_t *)&leng)) == -1){
             err(1, "accept failed");
         }
-        printf("connection accepted\n");
+
         
         //prijímanie dát od klienta
         if((size = read(sock, buffer, BUFFER)) > 0){
-            printf("Received data\n");
             buffer[size] = 0;
-            std::cout << "\n\n\n" << buffer << "\n\n\n";
-        
         }
         
         
@@ -277,7 +273,6 @@ int main(int argc, char *argv[]){
         //char to string
         std::string buf(buffer);
         int iter = 0;
-        std::cout << buf << "----\n";
         //oddeli obsah správy na miesto znaku "\n\n"
         std::string delimiter = "\r\n\r\n";
         std::string token;
@@ -468,7 +463,6 @@ int main(int argc, char *argv[]){
                 std::stringstream ss;
                 std::map<int,std::string>::iterator it = obsah.begin();
                 for (it=obsah.begin(); it!=obsah.end(); ++it){
-                    std::cout << it->second;
                     ss << it->first << ". " << it->second << '\n';
                 }
                 message = "[";
@@ -572,19 +566,13 @@ int main(int argc, char *argv[]){
         int l =send.length();
         char *message_array = new char[l +1];
         strcpy(message_array, send.c_str());
-        std::cout << message_array << "\n-------message sent\n";
+        
         //odoslanie odpovede klientovi
-        //---memset(buffer, 0, sizeof(BUFFER));
-        //---strcpy(buffer, message_array);
-        //size = strlen(buffer);
         size = strlen(send.c_str());
-        std::cout << size << "----size\n";
-        //---i = write(sock, buffer, size);
         i = write(sock, send.c_str(), size);
         if(i != size){
             err(1, "write() failed");
         }
-        //std::cout << buffer << "\n******buffer\n";
         
         memset(buffer, 0, sizeof(BUFFER));
         //zatvorenie socketu a cakanie na dalsieho klienta

@@ -56,6 +56,8 @@ int main(int argc, char *argv[]){
     
     else if(argc < 6){
         std::cerr << "Invalid arguments\n";
+        printf("Vitajte v programe isaclient.cpp pre projekt do predmetu ISA\nProgram spustíte s nasledujúcimi argumentami:\n-H <host> -p <port> <command>\n\n<command> môže mať nasledujúce formy:\nboards - zobrazí názvy násteniek\nboard add <name> - vytvorí nástenku s názvon <name>\nboard delete <name> - vymaže celú nástenku s názvom <name>\nboard list <name> - zobrzí obsah nástenky s názvom <name>\nitem add <name> <content> - na koniec nástenky s názvom <name> pridá príspevok s obsahom <content>\nitem delete <name> <id> - na nástenke name odstráni príspevok s číslom <id>\nitem update <name> <id> <content> - na nástenke s názvom <name> zmení obsah príspevku číslo <id> na obsah <content>\n");
+        
         return(-1);
     }
     //-H nastaví host, -p nastaví číslo portu
@@ -70,6 +72,8 @@ int main(int argc, char *argv[]){
     }
     else{
         fprintf(stderr, "Invalid arguments\n");
+        printf("Vitajte v programe isaclient.cpp pre projekt do predmetu ISA\nProgram spustíte s nasledujúcimi argumentami:\n-H <host> -p <port> <command>\n\n<command> môže mať nasledujúce formy:\nboards - zobrazí názvy násteniek\nboard add <name> - vytvorí nástenku s názvon <name>\nboard delete <name> - vymaže celú nástenku s názvom <name>\nboard list <name> - zobrzí obsah nástenky s názvom <name>\nitem add <name> <content> - na koniec nástenky s názvom <name> pridá príspevok s obsahom <content>\nitem delete <name> <id> - na nástenke name odstráni príspevok s číslom <id>\nitem update <name> <id> <content> - na nástenke s názvom <name> zmení obsah príspevku číslo <id> na obsah <content>\n");
+        
         return(-1);
     }
     
@@ -200,7 +204,6 @@ int main(int argc, char *argv[]){
     char* message_array = new char[l +1];
     strcpy(message_array, message.c_str());
     
-    std::cout << message_array << "\n";
     //odoslanie správy na server
     strcpy(buffer1, message_array);
     int j = write(sock, buffer1, 100);
@@ -215,7 +218,6 @@ int main(int argc, char *argv[]){
     }
    else if (j > 0){
        std::string buf(buffer2);
-       std::cout << buf << "*****buffer\n";
        std::string delimiter = "\r\n\r\n";
        std::string token;
        std::string header;
@@ -243,13 +245,27 @@ int main(int argc, char *argv[]){
             }
         }
         else{
-            std::cout << "nenasiel to ten skurveny regex\n";
+            ret = -1;
         }
         //vypísanie odpovede
         //hlavičku na chybový výstup
-        //telo správy na štandardný výstup
-        std::cerr << "header: " << header << "\n";
-        std::cout << "content: " << text << "\n";
+        //telo správy na štandardný výstup v prípade ze je dĺžka správy väčšia ako 0
+        std::cerr << header << "\n";
+        
+        transform(header.begin(), header.end(), header.begin(), ::tolower);
+                
+        std::regex r_content("content-lenght:(.+)");
+        std::smatch m2;
+        int value;
+        std::string s;
+        if(std::regex_search(header, m2, r_content)){
+            s = m2[1];
+            value = atoi(s.c_str());
+            if (value > 0) {
+                std::cout << text;
+            }
+        }
     }
+    close(sock);
     return(ret);
 }
