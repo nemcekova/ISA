@@ -4,7 +4,8 @@
 ###Autor: Barbora Nemčeková (xnemce06)
 
 #Popis programu
-
+Aplikácia umožňuje klientovi vytvárať a spravovať nástenky na serveri. Na nástenkach je možné pridávať, mazať alebo upravovať príspevky.
+Komunikácia je vytvorená pomocou BSD schránok a HTTP protokolu.
 
 
 #Spustenie serveru:
@@ -28,9 +29,9 @@ Spustenie klienta:
 
 #Odovzdané súbory:
 manual.pdf
-README.md
+README
 /client/isaclient.cpp
 /client/Makefile
 /server/isaserver.cpp
-/server/isaserver.h
+/server/isaserver.hpp
 /server/Makefile
