@@ -1,14 +1,14 @@
-#Programovanie sieťovej služby
-###Varianta: http nástenka
+# Programovanie sieťovej služby
+### Varianta: http nástenka
 
-###Autor: Barbora Nemčeková (xnemce06)
+### Autor: Barbora Nemčeková (xnemce06)
 
-#Popis programu
+# Popis programu
 Aplikácia umožňuje klientovi vytvárať a spravovať nástenky na serveri. Na nástenkach je možné pridávať, mazať alebo upravovať príspevky.
 Komunikácia je vytvorená pomocou BSD schránok a HTTP protokolu.
 
 
-#Spustenie serveru:
+# Spustenie serveru:
 ./isaserver -p <port>
 <port> - číslo portu
 
@@ -27,7 +27,7 @@ Spustenie klienta:
     item update <name> <id> <content> - zmení na nástenke s názvom <name> príspevok číslo <id> na obsah <content>
 
 
-#Odovzdané súbory:
+# Odovzdané súbory:
 manual.pdf
 README
 /client/isaclient.cpp
